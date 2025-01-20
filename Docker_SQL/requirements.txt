@@ -1,0 +1,8 @@
+pandas
+numpy
+psycopg2-binary
+pyarrow
+wget
+pgcli
+sqlalchemy
+psutil

@@ -1,0 +1,211 @@
+## Notes
+#view all docker containers
+docker ps -a
+#view running containers
+docker ps 
+
+#run docker in interactive mode with bash entrypoint and python
+docker run -it --entrypoint=bash python:3.9
+
+#stop running container
+docker stop <container_name_or_id>
+#stop forcefully
+docker kill container_id
+
+#remove container
+docker rm <container_name_or_id>
+docker rm -f <container_name_or_id>
+
+#remove all stopped containers
+docker container prune
+
+#rename a container
+docker rename <old_name> <new_name>
+
+#check all images
+docker images
+
+#delete docker image
+docker rmi taxi_ingest:v001
+
+docker rmi -f taxi_ingest:v001
+
+#logs all data 
+docker logs container-name
+
+#create network
+#docker network create pg-network
+
+#python -m http.server (useful when you need to download from the current dir)
+
+#list all networks
+docker network ls
+
+#inspect network
+docker network inspect [network_name]
+
+
+
+#start a running container
+#docker start -a my-container
+
+
+#postgres
+docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v /workspaces/Data-Engineering-Zoomcamp/Docker_SQL/ny_taxi_postgres_data:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  --network=pg-network \
+  --name pg-database \
+  postgres:13
+
+run using one of 
+
+python /workspaces/Data-Engineering-Zoomcamp/Docker_SQL/dataloader.py 
+    --user root
+    --password root
+    --host localhost
+    --port 5432
+    --db ny_taxi
+    --table-name yellow_taxi_data
+    --url "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet"
+    --max-workers 4
+
+python ./Docker_SQL/dataloader.py     --user root     --password root     --host localhost     --port 5432     --db ny_taxi     --table-name yellow_taxi_data     --url "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet"     --batch-size 10000     --max-workers 2
+
+##pgcli
+#pgcli -h localhost -p 5432 -u root -d ny_taxi
+
+##PgAdmin
+##working codespaces (ensure no trailing whitespace(s) after \)
+## add proxy_host: https://github.com/orgs/community/discussions/17918
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -e PGADMIN_CONFIG_PROXY_X_HOST_COUNT=1 \
+  -e PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT=1 \
+  -p 8080:80 \
+  --network=pg-network \
+  --name pgadmin \
+  dpage/pgadmin4
+
+
+#in pgAdmin, login with admin@admin.com and root, click server, register, and server. Name: I used Docker, under connection, 
+#hostname: pg-database (to connect to postgres), username: root, password: root, port:5432 (I had to try multiple times before I was able to login)
+
+#once loggedin, click docker, database, ny_taxi, schema, tables, yellow_taxi_data, right click, view/edit data, First 100 Rows
+
+#convert jupyter notebook script
+#jupyter nbconvert --to=script upload-data.ipynb
+
+#bash
+#$?  (0 means program finished successful else not successful)
+
+#build
+docker build -t taxi_ingest:v001 .
+# docker build -t tag_name:v001 -f dockerfile_path .
+# docker run -d -it -p --name
+
+#to run built docker with the variables used in dataloader.py
+docker run -it --network=pg-network taxi_ingest:v001
+    --user root 
+    --password root
+    --host pg-database
+    --port 5432
+    --db ny_taxi
+    --table-name yellow_taxi_data
+    --url "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet"
+    --max-workers 1
+
+## combining multiple services, use docker-compose up
+services:
+  pgdatabase:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ny_taxi
+    volumes:
+      - "./ny_taxi_postgres_data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5432:5432"
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "8080:80"
+
+#u can run in detached mode, docker-compose up -d
+#stop using docker-compose down
+
+version: '3.8' 
+
+services:
+  pgdatabase:
+    image: postgres:13
+    container_name: pg_database  # Easy container identification
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+      # Optimize PostgreSQL performance
+      POSTGRES_MAX_CONNECTIONS: 100
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:rw
+    ports:
+      - "5432:5432"
+    healthcheck:  # Add health monitoring
+      test: ["CMD-SHELL", "pg_isready -h localhost -U root -d ny_taxi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - pg_network
+    deploy:  # Resource constraints
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pg_admin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      pgdatabase:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pg_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+networks:
+  pg_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
