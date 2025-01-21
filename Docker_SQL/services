@@ -156,6 +156,8 @@ services:
 #u can run in detached mode, docker-compose up -d
 #stop using docker-compose down
 
+#TODO: consider granting permission to current user to all data in Docker
+
 version: '3.8' 
 
 services:
@@ -223,6 +225,14 @@ volumes:
     driver: local
   pgadmin_data:
     driver: local
+
+## docker port mapping
+if you run a container from image with -p <host>:<container_port>, use <host> to connect within the host machine
+if -p is not specified, the container won't expose its ports to the host and the database can only be accessed
+within Docker network or the container itself
+e.g docker run -d -p 5431:5432 postgres
+# within the host: pgcli -h localhost -p 5431 -u user -d db
+#within another container in the same network e.g pgadmin, use: pgcli -h localhost -p 5432 -u user -d db
 
 
 ## SQL, u can use LEFT JOIN or RIGHT JOIN, OUTER JOIN in place of just JOIN
@@ -302,3 +312,11 @@ GROUP BY
 ORDER BY 
   "day" ASC, 
   "DOLocation" ASC;
+
+## HashiCorp Terraform
+IAC tool that lets u define cloud and on premise resources in human-readable format
+
+init-initialize the providers
+plan-what I am about to do
+apply-do what is in the tf files
+destroy-remove everything defined in the tf files
