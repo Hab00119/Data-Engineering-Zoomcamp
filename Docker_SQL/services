@@ -49,6 +49,8 @@ docker network inspect [network_name]
 #start a running container
 #docker start -a my-container
 
+#create network
+docker network create pg-network
 
 #postgres
 docker run -it \
@@ -109,6 +111,18 @@ docker build -t taxi_ingest:v001 .
 # docker run -d -it -p --name
 
 #to run built docker with the variables used in dataloader.py
+# to download csv: https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
+docker run -it --network=pg-network taxi_ingest:v001
+    --user root 
+    --password root
+    --host pg-database
+    --port 5432
+    --db ny_taxi
+    --table-name zones
+    --url "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv"
+    --max-workers 1
+
+
 docker run -it --network=pg-network taxi_ingest:v001
     --user root 
     --password root
@@ -209,3 +223,82 @@ volumes:
     driver: local
   pgadmin_data:
     driver: local
+
+
+## SQL, u can use LEFT JOIN or RIGHT JOIN, OUTER JOIN in place of just JOIN
+SELECT 
+    tpep_pickup_datetime,
+    tpep_dropoff_datetime,
+    total_amount,
+    CONCAT(pickup."Borough", '/', pickup."Zone") AS pickup_loc,
+    CONCAT(dropoff."Borough", '/', dropoff."Zone") AS dropoff_loc
+FROM yellow_taxi_data t
+JOIN zones pickup ON t."PULocationID" = pickup."LocationID"
+JOIN zones dropoff ON t."DOLocationID" = dropoff."LocationID"
+LIMIT 100
+
+
+###
+SELECT 
+  tpep_pickup_datetime,
+  tpep_dropoff_datetime,
+  total_amount,
+  CONCAT(zpu."Borough", '/', zpu."Zone") AS "pickup_loc",
+  CONCAT(zdo."Borough", '/', zdo."Zone") AS "dropoff_loc"
+FROM
+  yellow_taxi_data t,
+  zones zpu,
+  zones zdo
+WHERE
+  t."PULocationID" = zpu."LocationID" AND
+  t."DOLocationID" = zdo."LocationID"
+LIMIT 100
+
+
+# check if any pickup/dropoff location is null, use IS to compare
+#don't put comma before keywords
+SELECT
+  tpep_pickup_datetime,
+  "PULocationID",
+  tpep_dropoff_datetime,
+  total_amount,
+  "DOLocationID"
+FROM
+  yellow_taxi_data t
+  WHERE
+  t."PULocationID" IS NULL OR
+  t."DOLocationID" IS NULL
+
+# check rows where PUlocationID in yellow_taxi is not in locationID in zones
+SELECT
+  tpep_pickup_datetime,
+  "PULocationID",
+  tpep_dropoff_datetime,
+  total_amount,
+  "DOLocationID"
+FROM
+  yellow_taxi_data t
+  WHERE
+  t."PULocationID" NOT IN (SELECT "LocationID" FROM zones)
+
+#delete rows
+DELETE FROM zones WHERE "LocationID" = 142
+
+#casting date
+CAST(tpep_dropoff_datetime AS DATE) as "day"
+
+#
+SELECT
+  CAST(tpep_dropoff_datetime AS DATE) as "day",
+  "DOLocationID",
+  COUNT(1) as "count",
+  MAX(total_amount),
+  MAX(passenger_count)
+FROM
+  yellow_taxi_data t
+GROUP BY
+  1, 2
+  CAST(tpep_dropoff_datetime AS DATE);
+ORDER BY 
+  "day" ASC, 
+  "DOLocation" ASC;
