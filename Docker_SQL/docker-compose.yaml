@@ -1,3 +1,7 @@
+networks:
+  pg-network:
+    external: true
+    
 services:
   pgdatabase:
     image: postgres:13
@@ -16,6 +20,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - pg-network
 
   pgadmin:
     image: dpage/pgadmin4
@@ -29,3 +35,5 @@ services:
       pgdatabase:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - pg-network

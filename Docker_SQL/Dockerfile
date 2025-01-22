@@ -1,6 +1,5 @@
-FROM python:3.9
-
-RUN pip install pandas
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim as base
 
 WORKDIR /app
 COPY dataloader.py /app/dataloader.py
