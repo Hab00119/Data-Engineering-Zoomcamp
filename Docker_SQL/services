@@ -7,6 +7,8 @@ docker ps
 #run docker in interactive mode with bash entrypoint and python
 docker run -it --entrypoint=bash python:3.9
 
+
+
 #stop running container
 docker stop <container_name_or_id>
 #stop forcefully
@@ -76,6 +78,9 @@ python /workspaces/Data-Engineering-Zoomcamp/Docker_SQL/dataloader.py
     --max-workers 4
 
 python ./Docker_SQL/dataloader.py     --user root     --password root     --host localhost     --port 5432     --db ny_taxi     --table-name yellow_taxi_data     --url "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet"     --batch-size 10000     --max-workers 2
+python ./dataloader2.py     --user root     --password root     --host localhost     --port 5432     --db ny_taxi     --table-name yellow_taxi_data     --url "https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz"     --batch-size 10000     --max-workers 1
+python ./dataloader2.py     --user root     --password root     --host localhost     --port 5432     --db ny_taxi     --table-name zones     --url "https://github.com/DataTalksClub/nyc-tlc-data/releases/download/misc/taxi_zone_lookup.csv"     --batch-size 10000     --max-workers 1
+
 
 ##pgcli
 #pgcli -h localhost -p 5432 -u root -d ny_taxi
@@ -297,7 +302,7 @@ DELETE FROM zones WHERE "LocationID" = 142
 #casting date
 CAST(tpep_dropoff_datetime AS DATE) as "day"
 
-#
+# incorrect
 SELECT
   CAST(tpep_dropoff_datetime AS DATE) as "day",
   "DOLocationID",
@@ -312,6 +317,28 @@ GROUP BY
 ORDER BY 
   "day" ASC, 
   "DOLocation" ASC;
+
+
+
+
+# correct
+SELECT
+  CAST(tpep_dropoff_datetime AS DATE) as "day",
+  "DOLocationID",
+  COUNT(1) as "count",
+  MAX(total_amount),
+  MAX(passenger_count)
+FROM
+  yellow_taxi_data t
+GROUP BY
+  CAST(tpep_dropoff_datetime AS DATE),
+  "DOLocationID"
+ORDER BY 
+  "day" ASC, 
+  "DOLocationID" ASC;
+
+#delete table
+DROP TABLE table_name;
 
 ## HashiCorp Terraform
 IAC tool that lets u define cloud and on premise resources in human-readable format

@@ -48,16 +48,12 @@ class NYCTripDataLoader:
         self.max_workers = max_workers
         self.filename = urlparse(url).path.split('/')[-1]
         
-        # Set up enhanced logging
         self._setup_logging()
         
-        # Initialize database connection
         self.engine = self._create_db_connection(user, password, host, port, db)
         
-        # Auto-calculate optimal batch size if not provided
         self.batch_size = batch_size or self._calculate_optimal_batch_size()
         
-        # Track performance metrics
         self.metrics = {
             'download_time': 0,
             'processing_time': 0,
@@ -123,7 +119,7 @@ class NYCTripDataLoader:
             return pd.read_csv(
                 self.filename,
                 chunksize=self.batch_size,
-                dtype_backend='pyarrow'  # Use Arrow for better performance
+                dtype_backend='pyarrow'  
             )
         else:
             raise ValueError("Unsupported file format. Use .csv or .parquet files.")
@@ -131,7 +127,6 @@ class NYCTripDataLoader:
     def _prepare_table_schema(self) -> None:
         """Prepare database table with optimized schema."""
         try:
-            # Read sample data
             #self.logger.info(f"Got here")
             if '.parquet' in self.filename:
                 df_sample = next(pq.ParquetFile(self.filename).iter_batches(batch_size=1)).to_pandas()
@@ -139,7 +134,6 @@ class NYCTripDataLoader:
                 df_sample = pd.read_csv(self.filename, nrows=1)
 
             #self.logger.info(f"Got here 2")
-            # Create table with optimized datatypes
             with self.engine.begin() as conn:
                 df_sample.head(0).to_sql(
                     name=self.table_name,
@@ -196,7 +190,6 @@ class NYCTripDataLoader:
             
             self.metrics['processing_time'] = time() - start_time
             
-            # Log final statistics
             self.logger.info("\nProcessing completed!")
             self.logger.info(f"Total rows processed: {self.metrics['total_rows']:,}")
             self.logger.info(f"Total batches processed: {self.metrics['batches_processed']:,}")

@@ -17,6 +17,7 @@ docker stop <container-name>         # Stop container
 docker rm [-f] <container-name>      # Remove container
 docker rename <old-name> <new-name>  # Rename container
 docker container prune               # Remove all stopped containers
+docker run -it --entrypoint=bash python:3.9. #run docker in interactive mode with bash entrypoint and python
 ```
 
 ### Image Management
@@ -309,7 +310,7 @@ After logging in:
 **Note**: If no data has been ingested into the Postgres database, the `yellow_taxi_data` table will not appear.
 
 ## Data Ingestion with docker
-I created a Dockerfile to load `dataloader.py` (a Python script for ingesting data into the database). You can find the code here: [link](https://github.com/Hab00119/Data-Engineering-Zoomcamp/tree/main/Docker_SQL).  
+I created a Dockerfile to load `dataloader2.py` (a Python script for ingesting data into the database). You can find the code here: [link](https://github.com/Hab00119/Data-Engineering-Zoomcamp/tree/main/Docker_SQL).  
 
 To run the Dockerfile:  
 1. **Build a Docker image**  
@@ -318,7 +319,7 @@ docker build -t taxi_ingest:v001 .
 ```
 
 2. **Run the image with the dataloader parameters**  
-   The dataloader supports both `.csv` and `.parquet` files. For parallelization, you can use the `--max-workers` parameter. However, if memory is limited, set `--max-workers` to `1`.  
+   The dataloader supports both `.csv` and `.parquet` files. The modified version dataloader2.py also supports `.gz` file but you need to include it in the Dockerfile or ingest data into the db directly with python (without Docker). For parallelization, you can use the `--max-workers` parameter. However, if memory is limited, set `--max-workers` to `1`.  
 ```bash
 docker run -it --network=pg-network taxi_ingest:v001
     --user root 

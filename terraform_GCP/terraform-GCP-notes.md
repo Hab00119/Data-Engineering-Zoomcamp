@@ -1,10 +1,10 @@
 ## HashiCorp Terraform
 IAC tool that lets u define cloud and on premise resources in human-readable format
 
-init-initialize the providers
-plan-what I am about to do
-apply-do what is in the tf files
-destroy-remove everything defined in the tf files
+terraform init-initialize the providers
+terraform plan-what I am about to do
+terraform apply-do what is in the tf files (or terraform apply -auto-approve)
+terraform destroy-remove everything defined in the tf files
 
 # GCP
 create a project

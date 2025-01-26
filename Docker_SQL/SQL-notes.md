@@ -117,3 +117,18 @@ ORDER BY
   "day" ASC, 
   "DOLocationID" ASC;
 ```
+
+### Additional
+
+## Complete Table Deletion
+```sql
+DROP TABLE table_name;
+DROP TABLE table_name CASCADE; -- With dependency removal
+```
+```sql
+-- Remove all rows, keep table structure
+TRUNCATE TABLE table_name;
+
+-- Delete specific rows
+DELETE FROM table_name WHERE condition;
+```
