@@ -24,6 +24,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+    networks:
+      - pg-network2
 
   kestra:
     image: kestra/kestra:latest
@@ -71,3 +73,5 @@ services:
     depends_on:
       postgres:
         condition: service_started
+    networks:
+      - pg-network2
