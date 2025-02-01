@@ -1,0 +1,43 @@
+networks:
+  pg-network2:
+    external: true
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres-db
+    environment:
+      - POSTGRES_USER=kestra
+      - POSTGRES_PASSWORD=k3str4
+      - POSTGRES_DB=postgres-zoomcamp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kestra -d postgres-zoomcamp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pg-network2
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pg_admin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "8090:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pg-network2
+
+volumes:
+  postgres-data:
+
