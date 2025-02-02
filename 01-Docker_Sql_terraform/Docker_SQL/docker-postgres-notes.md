@@ -18,6 +18,8 @@ docker rm [-f] <container-name>      # Remove container
 docker rename <old-name> <new-name>  # Rename container
 docker container prune               # Remove all stopped containers
 docker run -it --entrypoint=bash python:3.9. #run docker in interactive mode with bash entrypoint and python
+docker compose down -v
+docker volume ls
 ```
 
 ### Image Management
@@ -26,7 +28,8 @@ docker run -it --entrypoint=bash python:3.9. #run docker in interactive mode wit
 docker images
 
 # Remove image
-docker rmi [-f] <image-name>:<tag>
+docker rmi [-f] <image-name>:<tag> #docker rmi -f $(docker images), $(docker ps -aq)
+
 
 # Build image
 docker build -t <image-name>:<tag> .
