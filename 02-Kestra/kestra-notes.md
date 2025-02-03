@@ -149,3 +149,10 @@ pgcli -h localhost -U kestra -d kestra
 - Ensure proper network configuration for container communication
 - Use healthchecks for dependent services
 - Configure volumes for data persistence
+
+
+## kestra with postgres and pgadmin
+
+
+
+## kestra with gcp (Bigquery Dataset, and GCP Bucket)
