@@ -37,3 +37,6 @@ FROM `de-zoomcamp-449719.zoomcamp.yellow_tripdata`
 WHERE filename LIKE 'yellow_tripdata_2021-03%'
 ```
 1925152
+
+## Question 6 How would you configure the timezone to New York in a Schedule trigger?
+Add a timezone property set to America/New_York in the Schedule trigger configuration
