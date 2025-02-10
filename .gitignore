@@ -1,12 +1,13 @@
 #keys
 **/keys/*
-**/.json
-**/.log
-**/.parquet
-**/.csv
+**/*.json
+*.json
+**/*.log
+**/*.parquet
+**/*.csv
 #terraform
 # Local .terraform directories
-**/.terraform/*
+**/*.terraform/*
 
 # .tfstate files
 *.tfstate
