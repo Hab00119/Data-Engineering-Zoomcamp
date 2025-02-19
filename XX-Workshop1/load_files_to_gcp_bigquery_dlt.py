@@ -164,7 +164,7 @@ class NYCTaxiDataLoader:
 @dlt.transformer(standalone=True)
 def read_parquet_optimized(items: Iterator[FileItemDict], data_type: Optional[str] = None,
                           year: Optional[int] = None, months: Optional[List[int]] = None,
-                          batch_size: int = 50000) -> Iterator[TDataItems]:
+                          batch_size: int = 100000) -> Iterator[TDataItems]:
     """
     Read Parquet files in an optimized way using `pyarrow.parquet.ParquetFile`.
     Processes files in batches to save memory.
@@ -204,9 +204,10 @@ def read_parquet_optimized(items: Iterator[FileItemDict], data_type: Optional[st
                         df['taxi_type'] = file_data_type  # Add source column
 
                         dlt_logger.info(f"Processing {len(df)} records from {file_name}")
+                        yield df.to_dict(orient="records")
 
-                        for record in df.to_dict(orient="records"):
-                            yield record
+                        # for record in df.to_dict(orient="records"):
+                        #     yield record
 
                 dlt_logger.info(f"Completed processing {file_name}")
             except Exception as e:
@@ -246,12 +247,13 @@ def read_csv_optimized(items: Iterator[FileItemDict], data_type: Optional[str] =
             try:
                 with file_obj.open() as f:
                     # Use pandas to read csv in chunks to save memory
-                    for chunk_num, chunk in enumerate(pd.read_csv(f, chunksize=50000)):
+                    for chunk_num, chunk in enumerate(pd.read_csv(f, chunksize=100000)):
                         # Add a source column to identify the data type
                         chunk['taxi_type'] = file_data_type
                         dlt_logger.debug(f"Processing chunk {chunk_num+1} with {len(chunk)} records from {file_name}")
-                        for record in chunk.to_dict(orient="records"):
-                            yield record
+                        yield chunk.to_dict(orient="records")
+                        # for record in chunk.to_dict(orient="records"):
+                        #     yield record
                 dlt_logger.info(f"Completed processing {file_name}")
             except Exception as e:
                 dlt_logger.error(f"Error processing {file_name}: {str(e)}")
@@ -296,13 +298,14 @@ def read_excel_optimized(items: Iterator[FileItemDict], sheet_name: str = "Sheet
                     dlt_logger.info(f"Loaded {len(df)} records from {file_name}")
                     
                     # Process in chunks to save memory
-                    chunk_size = 50000
+                    chunk_size = 100000
                     total_rows = len(df)
                     for i in range(0, total_rows, chunk_size):
                         chunk = df.iloc[i:min(i+chunk_size, total_rows)]
                         dlt_logger.debug(f"Processing chunk {i//chunk_size + 1} with {len(chunk)} records from {file_name}")
-                        for record in chunk.to_dict(orient="records"):
-                            yield record
+                        yield chunk.to_dict(orient="records")
+                        # for record in chunk.to_dict(orient="records"):
+                        #     yield record
                 dlt_logger.info(f"Completed processing {file_name}")
             except Exception as e:
                 dlt_logger.error(f"Error processing {file_name}: {str(e)}")
