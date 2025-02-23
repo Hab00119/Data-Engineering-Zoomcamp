@@ -127,3 +127,5 @@ Commands: dbt build
 generate docs on run
 run source freshness
 run on schedule
+
+add nightly to project under artifacts
