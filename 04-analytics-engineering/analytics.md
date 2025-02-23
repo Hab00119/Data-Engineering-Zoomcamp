@@ -129,3 +129,7 @@ run source freshness
 run on schedule
 
 add nightly to project under artifacts
+
+you can also add CI/CD job and set commands to: dbt build --select state:modified+
+
++ is the children
