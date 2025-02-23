@@ -94,4 +94,36 @@ Data Source (EL): NYC Taxi trip
 Data transformation (T): bigquery or postgres
 - bigquery, development using cloud IDE, no local installation of dbt Core
 - postgres, use local IDE, install dbt core, run dbt models using CLI
-Analytic Tools: 
+
+## materialization in dbt
+- view: virtual table
+- table: real table
+- ephemeral
+- incremental
+
+## starting a dbt project
+create a GCP service account (add BigQuery admin and storage admin access), generate json key, check [https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/04-analytics-engineering/dbt_cloud_setup.md](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/04-analytics-engineering/dbt_cloud_setup.md)
+open user account, click on project, and create a new project named taxi_rides_ny. connect it to bigquery under connections. 
+
+From the dbt croud, initialize the project
+in bigquery, create a dataset trips_data_all dataset in bigquery manually and use multi regions in US. Run the query in [/workspaces/Data-Engineering-Zoomcamp/04-analytics-engineering/load_data_to_bigquery_hack.sql](/workspaces/Data-Engineering-Zoomcamp/04-analytics-engineering/load_data_to_bigquery_hack.sql) to create the green and yellow tables.
+
+to generate a model, use 
+{% set models_to_generate = codegen.get_models(directory='staging', prefix='stg) %}
+{{ codegen.generate_model_yaml(
+    model_names = models_to_generate
+)}}
+
+and compile
+
+dbt docs generate (generates dbt docs)
+
+### deployment
+create a new environment named (Production), dataset prod, then create a deploy job under Production env with:
+job name: Nightly
+description: This is where the data hits production
+environment: Production
+Commands: dbt build
+generate docs on run
+run source freshness
+run on schedule
