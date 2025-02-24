@@ -1,6 +1,7 @@
 import os
 import requests
 import argparse
+import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -25,130 +26,130 @@ class NYCTaxiDataLoader:
         self.storage_client = storage.Client(credentials=self.credentials)
         self.bucket = self.storage_client.bucket(bucket_name)
         
-        # Set up logging
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
         self.logger = logging.getLogger(__name__)
 
-    def _generate_file_urls(self, year, month, service_type="yellow"):
-        """
-        Generate URLs for all supported file formats
-        
-        Args:
-            year (int): Year of the data
-            month (int): Month of the data
-            service_type (str): Type of taxi service (yellow, green, fhv)
+    def _download_file(self, url, local_path):
+        """Download file from URL"""
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
             
-        Returns:
-            list: List of tuples containing (url, filename) for each format
-        """
-        formats = [
-            ("parquet", "parquet"),
-            ("csv", "csv"),
-            ("csv.gz", "csv.gz")
-        ]
-        
-        urls = []
-        for ext, file_ext in formats:
-            file_name = f"{service_type}_tripdata_{year}-{month:02d}.{file_ext}"
-            url = f"{self.base_url}/{file_name}"
-            urls.append((url, file_name))
-        
-        return urls
+            with open(local_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            return True
+        except Exception as e:
+            self.logger.error(f"Error downloading from {url}: {str(e)}")
+            return False
 
-    def download_file(self, year, month, service_type="yellow"):
-        """
-        Try to download data in available formats
-        
-        Args:
-            year (int): Year of the data
-            month (int): Month of the data
-            service_type (str): Type of taxi service
+    def process_csv(self, year, month, service_type):
+        """Process and upload CSV file"""
+        file_name = f"{service_type}_tripdata_{year}-{month:02d}.csv"
+        url = f"{self.base_url}/{file_name}"
+        local_path = f"/tmp/{file_name}"
+
+        try:
+            self.logger.info(f"Downloading CSV file: {file_name}")
+            if self._download_file(url, local_path):
+                success = self.upload_to_gcs(local_path, file_name)
+                return success
+            return False
+        except Exception as e:
+            self.logger.error(f"Error processing CSV {file_name}: {str(e)}")
+            if os.path.exists(local_path):
+                os.remove(local_path)
+            return False
+
+    def process_parquet(self, year, month, service_type):
+        """Process and upload Parquet file"""
+        file_name = f"{service_type}_tripdata_{year}-{month:02d}.parquet"
+        url = f"{self.base_url}/{file_name}"
+        local_path = f"/tmp/{file_name}"
+
+        try:
+            self.logger.info(f"Downloading Parquet file: {file_name}")
+            if self._download_file(url, local_path):
+                success = self.upload_to_gcs(local_path, file_name)
+                return success
+            return False
+        except Exception as e:
+            self.logger.error(f"Error processing Parquet {file_name}: {str(e)}")
+            if os.path.exists(local_path):
+                os.remove(local_path)
+            return False
+
+    def process_csv_gz(self, year, month, service_type):
+        """Process CSV.GZ file and convert to Parquet"""
+        gz_file_name = f"{service_type}_tripdata_{year}-{month:02d}.csv.gz"
+        parquet_file_name = gz_file_name.replace('.csv.gz', '.parquet')
+        url = f"{self.base_url}/{gz_file_name}"
+        local_gz_path = f"/tmp/{gz_file_name}"
+        local_parquet_path = f"/tmp/{parquet_file_name}"
+
+        try:
+            self.logger.info(f"Downloading CSV.GZ file: {gz_file_name}")
+            if not self._download_file(url, local_gz_path):
+                return False
+
+            self.logger.info(f"Converting {gz_file_name} to parquet")
+            df = pd.read_csv(local_gz_path, compression='gzip')
+            df.to_parquet(local_parquet_path, engine='pyarrow')
             
-        Returns:
-            tuple: (local_path, gcs_blob_name) if successful, None if failed
-        """
-        urls = self._generate_file_urls(year, month, service_type)
-        
-        for url, file_name in urls:
-            local_path = f"/tmp/{file_name}"
+            # Clean up gz file
+            os.remove(local_gz_path)
             
-            try:
-                # Try to download the file
-                self.logger.info(f"Attempting to download {file_name}")
-                response = requests.get(url, stream=True)
-                response.raise_for_status()
-                
-                with open(local_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                
-                self.logger.info(f"Successfully downloaded {file_name}")
-                return local_path, file_name
-                
-            except requests.exceptions.RequestException as e:
-                self.logger.warning(f"Failed to download {file_name}: {str(e)}")
-                continue
-            except Exception as e:
-                self.logger.error(f"Error processing {file_name}: {str(e)}")
-                continue
-        
-        self.logger.error(f"Failed to download data for {year}-{month:02d} in any format")
-        return None
+            # Upload parquet file
+            success = self.upload_to_gcs(local_parquet_path, parquet_file_name)
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Error processing CSV.GZ {gz_file_name}: {str(e)}")
+            if os.path.exists(local_gz_path):
+                os.remove(local_gz_path)
+            if os.path.exists(local_parquet_path):
+                os.remove(local_parquet_path)
+            return False
 
     def upload_to_gcs(self, local_path, blob_name):
-        """
-        Upload a file to Google Cloud Storage
-        
-        Args:
-            local_path (str): Path to local file
-            blob_name (str): Name for the blob in GCS
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
+        """Upload file to Google Cloud Storage"""
         try:
             blob = self.bucket.blob(blob_name)
             self.logger.info(f"Uploading {blob_name} to GCS")
             blob.upload_from_filename(local_path)
-            
-            # Clean up local file
             os.remove(local_path)
             return True
-            
         except Exception as e:
             self.logger.error(f"Error uploading {blob_name}: {str(e)}")
+            if os.path.exists(local_path):
+                os.remove(local_path)
             return False
 
-    def process_month(self, year, month, service_type="yellow"):
-        """Process a single month's data (download and upload)"""
-        result = self.download_file(year, month, service_type)
-        if result:
-            local_path, blob_name = result
-            return self.upload_to_gcs(local_path, blob_name)
-        return False
-
-    def process_months(self, year, start_month=1, end_month=7, max_workers=4, service_type="yellow"):
-        """
-        Process multiple months in parallel
+    def process_month(self, year, month, service_type, file_format):
+        """Process a single month's data based on format"""
+        format_processors = {
+            'csv': self.process_csv,
+            'parquet': self.process_parquet,
+            'csv.gz': self.process_csv_gz
+        }
         
-        Args:
-            year (int): Year of the data
-            start_month (int): Starting month (default: 1)
-            end_month (int): Ending month (default: 7)
-            max_workers (int): Maximum number of parallel workers (default: 4)
-            service_type (str): Type of taxi service (default: "yellow")
+        processor = format_processors.get(file_format)
+        if not processor:
+            self.logger.error(f"Unsupported file format: {file_format}")
+            return False
             
-        Returns:
-            list: List of successfully processed months
-        """
+        return processor(year, month, service_type)
+
+    def process_months(self, year, start_month, end_month, service_type, file_format, max_workers=4):
+        """Process multiple months in parallel"""
         successful_months = []
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_month = {
-                executor.submit(self.process_month, year, month, service_type): month
+                executor.submit(self.process_month, year, month, service_type, file_format): month
                 for month in range(start_month, end_month + 1)
             }
             
@@ -197,6 +198,13 @@ def parse_args():
     )
     
     parser.add_argument(
+        '--file-format',
+        choices=['csv', 'parquet', 'csv.gz'],
+        required=True,
+        help='File format to download and process'
+    )
+    
+    parser.add_argument(
         '--year',
         type=int,
         default=datetime.now().year,
@@ -241,8 +249,9 @@ def main():
         year=args.year,
         start_month=args.start_month,
         end_month=args.end_month,
-        max_workers=args.workers,
-        service_type=args.service_type
+        service_type=args.service_type,
+        file_format=args.file_format,
+        max_workers=args.workers
     )
     
     print("\nSummary:")
@@ -263,10 +272,11 @@ if __name__ == "__main__":
 # Full example with all parameters
 # python /workspaces/Data-Engineering-Zoomcamp/03-data-warehouse/upload_NYC_to_gcs2.py \
 #     --credentials /workspaces/Data-Engineering-Zoomcamp/03-data-warehouse/new-de-zoomcamp-449719-9c27773d9a31.json \
-#     --bucket habeeb-kestra \
-#     --base-url "https://github.com/DataTalksClub/nyc-tlc-data/releases/tag/fhv" \
+#     --bucket habeeb-babat-kestra \
+#     --base-url "https://d37ci6vzurychx.cloudfront.net/trip-data" \
 #     --service-type fhv \
 #     --year 2019 \
 #     --start-month 1 \
+#     --file-format parquet\
 #     --end-month 12 \
 #     --workers 1
