@@ -21,7 +21,6 @@ monthly_fare_percentile as (
         -- Calculating the 95th percentile of fare_amount
         PERCENTILE_CONT(fare_amount, 0.95) OVER (
             PARTITION BY service_type, revenue_year, revenue_month
-            ORDER BY fare_amount
         ) as fare_amount_p95
 
     from trips_data
