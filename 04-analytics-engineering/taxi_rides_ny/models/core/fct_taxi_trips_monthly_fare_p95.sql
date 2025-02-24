@@ -20,7 +20,7 @@ monthly_fare_percentile as (
 
         -- Calculating the 95th percentile of fare_amount
         PERCENTILE_CONT(fare_amount, 0.95) OVER (
-            PARTITION BY service_type, revenue_year, revenue_month
+            PARTITION BY service_type, extract(year from pickup_datetime), extract(month from pickup_datetime)
         ) as fare_amount_p95
 
     from trips_data
@@ -35,10 +35,3 @@ select
     service_type,
     fare_amount_p95
 from monthly_fare_percentile
-group by
-    revenue_zone,
-    revenue_year,
-    revenue_month,
-    revenue_quarter,
-    revenue_year_quarter,
-    service_type
