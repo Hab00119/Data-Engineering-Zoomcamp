@@ -31,6 +31,16 @@ models:
           - not_null:
               severity: error
 
+  - name: fct_taxi_trips_monthly_fare_p95
+    description: >
+      Aggregated table of all taxi trips corresponding to both service zones (Green and yellow) per pickup zone, month and service.
+      The table contains monthly sums of the fare elements used to calculate the monthly revenue. 
+      The table contains also monthly indicators like number of trips, and average trip distance.
+      We added additional dimensions like year, quarter, percentiles and so on
+    columns:
+      - name: revenue_month
+        description: Month for the trip per pickup zone.
+
   - name: fact_trips
     description: >
       Taxi trips corresponding to both service zones (Green and yellow).
