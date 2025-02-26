@@ -167,3 +167,20 @@ models:
         description: ""
       - name: dropoff_datetime
         description: ""
+
+  - name: fct_fhv_monthly_zone_traveltime_p90.sql
+    description: >
+      Taxi trips corresponding to Fhv (for 9o percentile).
+      The table contains records where both pickup and dropoff locations are valid and known zones. 
+      Each record corresponds to a trip uniquely identified by tripid.
+    columns:
+      - name: dispatching_base_num
+        description: ""
+      - name: pickup_locationid
+        description: ""
+      - name: dropoff_locationid
+        description: ""
+      - name: pickup_datetime
+        description: ""
+      - name: dropoff_datetime
+        description: ""

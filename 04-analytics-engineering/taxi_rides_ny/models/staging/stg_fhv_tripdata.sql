@@ -14,4 +14,5 @@ select
     SR_Flag
 
 from {{ source('staging', 'fhv_tripdata')}}
-where extract(year from cast(pickup_datetime as timestamp)) = 2019
+where extract(year from cast(pickup_datetime as timestamp)) = 2019 
+and dispatching_base_num is not null
