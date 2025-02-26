@@ -15,7 +15,8 @@ select
    -- identifiers
     {{ dbt_utils.generate_surrogate_key(['vendorid', 'tpep_pickup_datetime']) }} as tripid,    
     {{ dbt.safe_cast("vendorid", api.Column.translate_type("integer")) }} as vendorid,
-    {{ dbt.safe_cast("ratecodeid", api.Column.translate_type("integer")) }} as ratecodeid,
+    {{ dbt.safe_cast("SAFE_CAST(ratecodeid AS FLOAT64)", api.Column.translate_type("integer")) }} as ratecodeid,
+    --{{ dbt.safe_cast("ratecodeid", api.Column.translate_type("integer")) }} as ratecodeid,
     {{ dbt.safe_cast("pulocationid", api.Column.translate_type("integer")) }} as pickup_locationid,
     {{ dbt.safe_cast("dolocationid", api.Column.translate_type("integer")) }} as dropoff_locationid,
 
