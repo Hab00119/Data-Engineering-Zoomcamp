@@ -7,8 +7,8 @@
 with fhv_trip as (
     select *, 
         'Fhv' as service_type,
-        dbt.date_trunc('year', cast(pickup_datetime as timestamp)) as year,
-        dbt.date_trunc('month', cast(pickup_datetime as timestamp)) as month
+       {{ dbt.date_trunc('year', cast(pickup_datetime as timestamp)) }} as year,
+       {{ dbt.date_trunc('month', cast(pickup_datetime as timestamp)) }} as month
     from {{ ref('stg_fhv_tripdata') }}
 ),
 
