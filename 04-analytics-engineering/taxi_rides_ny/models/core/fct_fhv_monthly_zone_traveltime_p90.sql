@@ -31,7 +31,5 @@ select
     month,
     pickup_zone,
     dropoff_zone,
-    -- Calculate the 90th percentile of trip_duration for each group
-    percentile_cont(0.9) within group (order by trip_duration) as trip_duration_p90
+    trip_duration
 from fhv_trips
-group by year, month, pickup_zone, dropoff_zone
