@@ -18,7 +18,7 @@ with fhv_trips as (
         fhv_trip.year,
         fhv_trip.month,
         -- Calculate trip_duration in seconds
-        timestamp_diff(fhv_trip.dropoff_datetime, fhv_trip.pickup_datetime, 'second') as trip_duration
+        TIMESTAMP_DIFF(fhv_trip.dropoff_datetime, fhv_trip.pickup_datetime, SECOND) as trip_duration
     from {{ ref('fact_fhv_trips') }} as fhv_trip
     inner join {{ ref('dim_zones') }} as pickup_zone
         on fhv_trip.pickup_locationid = pickup_zone.locationid
