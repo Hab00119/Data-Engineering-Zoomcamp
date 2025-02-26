@@ -14,9 +14,23 @@ sources:
           # error_after: {count: 6, period: hour}
       - name: fhv_tripdata
 models:
+  - name: stg_fhv_tripdata
+    description: ""
+    columns:
+      - name: dispatching_base_num
+        description: ""
+      - name: pickup_locationid
+        description: ""
+      - name: dropoff_locationid
+        description: ""
+      - name: pickup_datetime
+        description: ""
+      - name: dropoff_datetime
+        description: ""
+        
   - name: stg_green_tripdata
     description: >
-      Trip made by green taxis, also known as boro taxis and street-hail liveries.
+      The trip was made by green taxis, also known as boro taxis and street-hail liveries.
       Green taxis may respond to street hails,but only in the areas indicated in green on the
       map (i.e. above W 110 St/E 96th St in Manhattan and in the boroughs).
       The records were collected and provided to the NYC Taxi and Limousine Commission (TLC) by
