@@ -4,7 +4,7 @@
 
 {% macro get_payment_type_description(payment_type) -%}
 
-    case {{ dbt.safe_cast("payment_type", api.Column.translate_type("integer")) }}  
+    case {{ dbt.safe_cast("SAFE_CAST(payment_type AS FLOAT64)", api.Column.translate_type("integer")) }}  
         when 1 then 'Credit card'
         when 2 then 'Cash'
         when 3 then 'No charge'
