@@ -14,6 +14,20 @@ sources:
           # error_after: {count: 6, period: hour}
       - name: fhv_tripdata
 models:
+  - name: stg_fhv_tripdata
+    description: ""
+    columns:
+      - name: dispatching_base_num
+        description: ""
+      - name: pickup_locationid
+        description: ""
+      - name: dropoff_locationid
+        description: ""
+      - name: pickup_datetime
+        description: ""
+      - name: dropoff_datetime
+        description: ""
+        
   - name: stg_green_tripdata
     description: >
       The trip was made by green taxis, also known as boro taxis and street-hail liveries.
