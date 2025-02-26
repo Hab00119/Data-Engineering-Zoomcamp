@@ -27,9 +27,13 @@ with fhv_trips as (
 )
 
 select
+    dispatching_base_num,
     year,
     month,
     pickup_zone,
     dropoff_zone,
-    trip_duration
+    trip_duration,
+    dropoff_locationid,
+    pickup_locationid,
+    service_type
 from fhv_trips
