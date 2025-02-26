@@ -7,6 +7,8 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from datetime import datetime
 import logging
+import gzip
+import wget
 
 class NYCTaxiDataLoader:
     def __init__(self, gcp_credentials_path, bucket_name, base_url):
@@ -38,6 +40,16 @@ class NYCTaxiDataLoader:
             response = requests.get(url, stream=True)
             response.raise_for_status()
             
+            # Check content type and size
+            content_type = response.headers.get('Content-Type', '')
+            content_length = int(response.headers.get('Content-Length', 0))
+            
+            if content_length == 0 or 'text/html' in content_type:
+                self.logger.error(f"Received invalid response. Content-Type: {content_type}, Content-Length: {content_length}")
+                # Print first 100 bytes of response for debugging
+                self.logger.error(f"Response preview: {response.content[:100]}")
+                return False
+                
             with open(local_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
@@ -45,6 +57,7 @@ class NYCTaxiDataLoader:
         except Exception as e:
             self.logger.error(f"Error downloading from {url}: {str(e)}")
             return False
+        
 
     def standardize_dataframe(self, df):
         """Standardize column data types in the dataframe"""
@@ -83,7 +96,7 @@ class NYCTaxiDataLoader:
                 df = pd.read_csv(local_path)
                 
                 # Standardize the column types
-                df = self.standardize_dataframe(df)
+                #df = self.standardize_dataframe(df)
                 
                 # Save as parquet with standardized types
                 parquet_file_name = file_name.replace('.csv', '.parquet')
@@ -118,7 +131,7 @@ class NYCTaxiDataLoader:
                 df = pd.read_parquet(local_path)
                 
                 # Standardize the column types
-                df = self.standardize_dataframe(df)
+                #df = self.standardize_dataframe(df)
                 
                 # Save the standardized dataframe
                 df.to_parquet(standardized_path, engine='pyarrow')
@@ -148,24 +161,24 @@ class NYCTaxiDataLoader:
 
         try:
             self.logger.info(f"Downloading CSV.GZ file: {gz_file_name}")
-            if not self._download_file(url, local_gz_path):
-                return False
-
-            self.logger.info(f"Converting {gz_file_name} to parquet")
-            df = pd.read_csv(local_gz_path, compression='gzip')
-            
-            # Standardize the column types
-            df = self.standardize_dataframe(df)
-            
-            df.to_parquet(local_parquet_path, engine='pyarrow')
-            
-            # Clean up gz file
-            os.remove(local_gz_path)
-            
-            # Upload parquet file
-            success = self.upload_to_gcs(local_parquet_path, parquet_file_name)
-            return success
-            
+            if self._download_file(url, local_gz_path):
+                self.logger.info(f"Converting {gz_file_name} to parquet")
+                # with gzip.open(local_gz_path, 'rt') as f:
+                #     df = pd.read_csv(f,dtype_backend='pyarrow')
+                df = pd.read_csv(local_gz_path, compression='gzip')
+                
+                # Standardize the column types
+                #df = self.standardize_dataframe(df)
+                
+                df.to_parquet(local_parquet_path, engine='pyarrow')
+                
+                # Clean up gz file
+                os.remove(local_gz_path)
+                
+                # Upload parquet file
+                success = self.upload_to_gcs(local_parquet_path, parquet_file_name)
+                return success
+            return False           
         except Exception as e:
             self.logger.error(f"Error processing CSV.GZ {gz_file_name}: {str(e)}")
             if os.path.exists(local_gz_path):
@@ -338,5 +351,16 @@ if __name__ == "__main__":
 #     --year 2019 \
 #     --start-month 1 \
 #     --file-format parquet \
+#     --end-month 12 \
+#     --workers 1
+
+# python /Users/habeebbabatunde/Downloads/shiny-python-projects-master/upload_to_gcs.py \
+#     --credentials /Users/habeebbabatunde/Downloads/new-de-zoomcamp-449719-9c27773d9a31.json \
+#     --bucket habeeb-babat-kestra-new \
+#     --base-url "https://github.com/DataTalksClub/nyc-tlc-data/releases/download/fhv" \
+#     --service-type fhv \
+#     --year 2019 \
+#     --start-month 1 \
+#     --file-format csv.gz \
 #     --end-month 12 \
 #     --workers 1
