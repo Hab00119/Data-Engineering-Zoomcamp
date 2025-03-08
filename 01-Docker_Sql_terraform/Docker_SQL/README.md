@@ -4,7 +4,7 @@ This project demonstrates how to set up a PostgreSQL database using Docker, load
 
 - **Option 1:** Manually run a Python script with Docker containers for PostgreSQL and pgAdmin.
 - **Option 2:** Wrap the Python script in a Docker image and use Docker Compose to orchestrate PostgreSQL, pgAdmin, and your ingestion service.
-> **Note:** SQL queries and further database operations are covered in a separate [SQL.md](/workspaces/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md) file.
+> **Note:** SQL queries and further database operations are covered in a separate [SQL.md](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md) file.
 
 ---
 
@@ -126,12 +126,13 @@ This option uses Docker Compose to bundle PostgreSQL, pgAdmin, and your Python-b
 
 ### 1. Prepare the Docker Compose File
 
-I already created `docker-compose.yaml` file [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/docker-compose.yaml) :
+I already created `docker-compose.yaml` file [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/Docker_SQL/docker-compose.yaml)
+
 
 
 ### 2. Build Your Ingestion Docker Image
 
-Assuming you have a `Dockerfile` that wraps your Python ingestion script (which I already created [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/Dockerfile)), build your image:
+Assuming you have a `Dockerfile` that wraps your Python ingestion script (which I already created [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/Docker_SQL/Dockerfile)), build your image:
 
 ```bash
 docker build -t taxi_ingest:v001 .
@@ -160,4 +161,4 @@ docker-compose up -d
 
 ## Next Steps
 
-Continue with SQL operations and queries in [SQL.md](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md).
+Continue with SQL operations and queries in [SQL.md](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md).
