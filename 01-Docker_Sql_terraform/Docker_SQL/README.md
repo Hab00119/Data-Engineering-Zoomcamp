@@ -126,12 +126,12 @@ This option uses Docker Compose to bundle PostgreSQL, pgAdmin, and your Python-b
 
 ### 1. Prepare the Docker Compose File
 
-I already created `docker-compose.yaml` file [here](/workspaces/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/docker-compose.yaml) :
+I already created `docker-compose.yaml` file [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/docker-compose.yaml) :
 
 
 ### 2. Build Your Ingestion Docker Image
 
-Assuming you have a `Dockerfile` that wraps your Python ingestion script (which I already created [here](/workspaces/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/Dockerfile)), build your image:
+Assuming you have a `Dockerfile` that wraps your Python ingestion script (which I already created [here](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/Dockerfile)), build your image:
 
 ```bash
 docker build -t taxi_ingest:v001 .
@@ -160,4 +160,4 @@ docker-compose up -d
 
 ## Next Steps
 
-Continue with SQL operations and queries in [SQL.md](/workspaces/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md).
+Continue with SQL operations and queries in [SQL.md](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/SQL-notes.md).
