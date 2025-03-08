@@ -7,17 +7,17 @@ This week covers foundational concepts in **Docker, SQL, Terraform, and Google C
    - Setting up containers with Docker  
    - Running PostgreSQL inside Docker  
    - Interacting with a database using SQL  
-   - [Read more ➝](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/Docker_SQL/README.md)  
+   - [Read more ➝](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/Docker_SQL/README.md)  
 
 2. **Terraform & GCP**  
    - Infrastructure as Code (IaC) using Terraform  
    - Provisioning **Google Cloud Storage (GCS)** and **BigQuery datasets**  
    - Authentication and managing GCP resources  
-   - [Read more ➝](https://github.com/Hab00119/Data-Engineering-Zoomcamp/01-Docker_Sql_terraform/terraform_GCP/README.md)  
+   - [Read more ➝](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/terraform_GCP/README.md)  
 
 ---
 
-## 📚 Homework & Exercises  
+## 📚 Homework 
 The assignments and solutions are in the **Jupyter Notebook** provided:  
 
 📄 [**Homework**](https://github.com/Hab00119/Data-Engineering-Zoomcamp/blob/main/01-Docker_Sql_terraform/homework1.ipynb)  
@@ -30,4 +30,3 @@ The assignments and solutions are in the **Jupyter Notebook** provided:
 - [Docker Docs](https://docs.docker.com/)  
 - [PostgreSQL Docs](https://www.postgresql.org/docs/)  
 
-🚀 *Happy Learning!*  
