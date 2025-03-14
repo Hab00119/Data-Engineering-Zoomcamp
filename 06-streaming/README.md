@@ -87,6 +87,9 @@ CREATE TABLE processed_events_aggregated (
 );
 
 SELECT COUNT(*) FROM processed_events_aggregated;
+
+ALTER TABLE processed_events_aggregated 
+ADD CONSTRAINT processed_events_pk PRIMARY KEY (event_hour, test_data);
 ```
 
 Allowed lateness and side_output_late_data in flink
