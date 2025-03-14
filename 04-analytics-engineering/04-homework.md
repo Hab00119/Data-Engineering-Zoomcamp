@@ -13,9 +13,9 @@ would be
 
 ```sql
 select *
-from  myproject.my_nyc_tripdata.ext_green_taxi
+from  myproject.raw_nyc_tripdata.ext_green_taxi
 ```
-
+because we defined DBT_BIGQUERY_DATASET and not DBT_BIGQUERY_SOURCE_DATASET
 ## 2
 ```sql
 where pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY

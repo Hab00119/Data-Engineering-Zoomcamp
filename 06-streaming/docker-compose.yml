@@ -1,0 +1,106 @@
+version: "3.9"  # Docker Compose version
+
+services:
+  # Redpanda service (Kafka-compatible service)
+  redpanda-1:
+    image: redpandadata/redpanda:v24.2.18  # Using Redpanda image
+    container_name: redpanda-1  # Container name
+    command:
+      - redpanda
+      - start
+      - --smp
+      - '1'  # Configure number of CPU cores Redpanda will use
+      - --reserve-memory
+      - 0M  # Reserve no memory
+      - --overprovisioned  # Allow overprovisioning of resources (for dev environments)
+      - --node-id
+      - '1'  # Redpanda node id
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092  # Kafka address binding inside and outside container
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda-1:29092,OUTSIDE://localhost:9092  # Advertised Kafka address
+      - --pandaproxy-addr
+      - PLAINTEXT://0.0.0.0:28082,OUTSIDE://0.0.0.0:8082  # Pandaproxy address
+      - --advertise-pandaproxy-addr
+      - PLAINTEXT://redpanda-1:28082,OUTSIDE://localhost:8082  # Advertised Pandaproxy address
+      - --rpc-addr
+      - 0.0.0.0:33145  # RPC address binding
+      - --advertise-rpc-addr
+      - redpanda-1:33145  # Advertised RPC address
+    ports:
+      - 8082:8082  # Expose Pandaproxy port inside container
+      - 9092:9092  # Expose Kafka port inside container
+      - 28082:28082  # Expose Pandaproxy port outside container
+      - 29092:29092  # Expose Kafka port outside container
+
+  # Flink Job Manager service
+  jobmanager:
+    build:
+      context: .  # Build from the current directory
+      dockerfile: ./Dockerfile.flink  # Use the custom Dockerfile for Flink
+    image: pyflink:1.16.0  # Image tag for Flink job manager
+    container_name: "flink-jobmanager"  # Container name
+    pull_policy: never  # Don't pull the image if already built locally
+    platform: "linux/amd64"  # Platform architecture
+    hostname: "jobmanager"  # Hostname for the container
+    expose:
+      - "6123"  # Expose Flink job manager RPC port
+    ports:
+      - "8081:8081"  # Expose Flink web UI port
+    volumes:
+      - ./:/opt/flink/usrlib  # Mount current directory as a library directory
+      - ./keys/:/var/private/ssl/  # Mount SSL keys directory
+      - ./src/:/opt/src  # Mount source code directory
+    command: jobmanager  # Run job manager
+    extra_hosts:
+      - "host.docker.internal:127.0.0.1"  # Allow access to host from container (Linux)
+      - "host.docker.internal:host-gateway"  # Enable access to host machine services
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL:-jdbc:postgresql://host.docker.internal:5432/postgres}  # Postgres URL
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}  # Postgres user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}  # Postgres password
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}  # Postgres database name
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager  # Set Job Manager RPC address
+
+  # Flink Task Manager service
+  taskmanager:
+    image: pyflink:1.16.0  # Image tag for Flink task manager
+    container_name: "flink-taskmanager"  # Container name
+    pull_policy: never  # Don't pull the image if already built locally
+    platform: "linux/amd64"  # Platform architecture
+    expose:
+      - "6121"  # Expose task manager port for communication with job manager
+      - "6122"  # Expose task manager port for communication with task manager
+    volumes:
+      - ./:/opt/flink/usrlib  # Mount current directory as a library directory
+      - ./src/:/opt/src  # Mount source code directory
+    depends_on:
+      - jobmanager  # Task manager depends on the job manager being up
+    command: taskmanager --taskmanager.registration.timeout 5 min  # Task manager startup command
+    extra_hosts:
+      - "host.docker.internal:127.0.0.1"  # Access host machine services
+      - "host.docker.internal:host-gateway"  # Access services on host machine
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager  # Job manager address for task manager
+        taskmanager.numberOfTaskSlots: 15  # Set task slots (parallelism)
+        parallelism.default: 3  # Default parallelism for tasks
+
+  # PostgreSQL Database service for Flink connectors
+  postgres:
+    image: postgres:14  # PostgreSQL 14 image
+    restart: on-failure  # Restart container if it fails
+    container_name: "postgres"  # Container name
+    environment:
+      - POSTGRES_DB=postgres  # Database name
+      - POSTGRES_USER=postgres  # Database user
+      - POSTGRES_PASSWORD=postgres  # Database password
+    ports:
+      - "5432:5432"  # Expose Postgres port
+    #command: ["postgres", "-c", "listen_addresses=*"]  # Add this line
+    extra_hosts:
+     - "host.docker.internal:127.0.0.1"  # Allow access to the host
+     - "host.docker.internal:host-gateway"  # Access services on host machine
