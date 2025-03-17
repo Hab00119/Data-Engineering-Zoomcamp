@@ -26,6 +26,10 @@ SELECT COUNT(*) FROM processed_events;
 ```
 
 
+```python
+python producer.py
+```
+
 view pyflink jobmanager on 8081
 ## create producer.py kafka file and run with python (the data should be accepted by redpanda) and start_job.py
 1️⃣ The producer (producer.py) sends messages to Redpanda on the Kafka topic (test-topic).
@@ -93,3 +97,29 @@ ADD CONSTRAINT processed_events_pk PRIMARY KEY (event_hour, test_data);
 ```
 
 Allowed lateness and side_output_late_data in flink
+
+
+homework schema
+```sql
+CREATE TABLE processed_sessions (
+    session_start TIMESTAMP(3),
+    session_end TIMESTAMP(3),
+    PULocationID BIGINT,
+    DOLocationID BIGINT,
+    trip_count BIGINT,
+    PRIMARY KEY (session_start, PULocationID, DOLocationID) NOT ENFORCED
+);
+```
+
+or 
+
+```sql
+CREATE TABLE location_streaks (
+    pickup_location_id INT,
+    dropoff_location_id INT,
+    streak_length BIGINT,
+    session_start TIMESTAMP,
+    session_end TIMESTAMP,
+    PRIMARY KEY (pickup_location_id, dropoff_location_id)
+);
+```
